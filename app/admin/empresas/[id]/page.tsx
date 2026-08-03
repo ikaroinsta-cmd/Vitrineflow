@@ -81,7 +81,7 @@ export default function EmpresaDetailPage() {
           <select
             className="input w-40"
             value={company.plan}
-            onChange={(e) => save({ plan: e.target.value })}
+            onChange={(e) => save({ plan: e.target.value as any })}
           >
             <option value="vitrine">Vitrine</option>
             <option value="vendas">Vendas</option>
