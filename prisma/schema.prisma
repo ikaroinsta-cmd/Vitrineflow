@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CompanyStatus {
+  active
+  blocked
+}
+
+enum CompanyPlan {
+  vitrine
+  vendas
+}
+
+enum UserRole {
+  super_admin
+  company_admin
+}
+
+enum OrderStatus {
+  pendente
+  confirmado
+  preparando
+  enviado
+  entregue
+  cancelado
+}
+
+model Company {
+  id         String        @id @default(cuid())
+  name       String
+  slug       String        @unique
+  customSlug String?       @unique
+  status     CompanyStatus @default(active)
+  plan       CompanyPlan   @default(vitrine)
+  logo       String?
+  color      String?       @default("#0EA5E9")
+  whatsapp   String?
+  email      String?
+  pixKey     String?
+  freteRules Json?
+
+  aceitaPix      Boolean @default(true)
+  aceitaCartao   Boolean @default(false)
+  aceitaRetirada Boolean @default(true)
+  aceitaEntrega  Boolean @default(true)
+
+  faturamento Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       User[]
+  products    Product[]
+  orders      Order[]
+  customLinks CustomLink[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      UserRole @default(company_admin)
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model Product {
+  id        String  @id @default(cuid())
+  title     String
+  brand     String?
+  desc      String?
+  imageUrl  String?
+  hasPrice  Boolean @default(true)
+  price     Float?
+  stock     Int     @default(0)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model Order {
+  id        String @id @default(cuid())
+  number    Int    @default(autoincrement())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  cliente   Json
+  produtos  Json
+  subtotal  Float
+  frete     Float  @default(0)
+  total     Float
+  pagamento String
+  entrega   String
+  status    OrderStatus @default(pendente)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model CustomLink {
+  id           String  @id @default(cuid())
+  companyId    String
+  company      Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  slug         String  @unique
+  originalSlug String
+  clicks       Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+}
